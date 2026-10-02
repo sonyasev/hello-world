@@ -1,0 +1,38 @@
+# ---- Your size profile (women) ----
+sizes:
+  upper:   ["UK 10", "S", "M", "IT 42"]            # tops, knitwear, dresses, outerwear
+  bottoms: ["UK 12", "M", "IT 42", "IT 44", "EU 40", "W 29"]
+  shoes:   ["EU 38", "EU 38.5", "EU 39"]
+  # bare numbers (no system label) are ambiguous; say how to read them per category.
+  # shoes are always read as EU.
+  bare_numbers:
+    bottoms: {"40": "EU", "29": "W"}
+
+# ---- Deal rules ----
+deals:
+  min_comps: 3            # need at least this many comparable pre-loved items
+  max_ratio_vs_preloved: 1.05   # new item: landed price <= 105% of median pre-loved landed price
+  preloved_max_ratio: 0.70      # pre-loved item: landed price <= 70% of median of similar pre-loved items
+  min_discount_vs_retail: 0.50  # fallback when no comps: >= 50% off original price
+  min_title_similarity: 0.25
+  max_price_eur: 1500
+  min_price_eur: 40
+
+# ---- Currency (EUR base). Update rates occasionally, or run `luxdeals fx` ----
+fx:
+  EUR: 1.0
+  USD: 0.86
+  GBP: 1.16
+  BGN: 0.5113
+
+# ---- Notifications (Viber bot). Secrets come from env vars, never from this file ----
+viber:
+  enabled: true
+  auth_token_env: VIBER_AUTH_TOKEN
+  receiver_env: VIBER_RECEIVER_ID
+  sender_name: LuxDeals
+  max_per_run: 10
+
+report:
+  output: site/index.html
+  max_rows: 500

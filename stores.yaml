@@ -1,0 +1,126 @@
+# One entry per store. `listing_urls` may contain {page}. `ships_from` decides import costs:
+#   EU     -> listed price already includes VAT, no duty
+#   non-EU -> (price + shipping) * (1 + duty_pct) * (1 + vat_pct)
+# shipping: free_over (EUR) / flat (EUR). Verify against each store's Bulgaria shipping page.
+# status: "unverified" = selectors/URLs not yet checked against the live site.
+stores:
+  - id: mytheresa
+    name: Mytheresa
+    type: new
+    ships_from: EU
+    shipping: {flat: 15, free_over: 400}
+    currency: EUR
+    listing_urls:
+      - https://www.mytheresa.com/bg/en/women/sale?page={page}
+    max_pages: 5
+    status: unverified
+
+  - id: theoutnet
+    name: THE OUTNET
+    type: new
+    ships_from: non-EU   # ships from UK
+    shipping: {flat: 15, free_over: 250}
+    currency: EUR
+    listing_urls:
+      - https://www.theoutnet.com/en-bg/shop/sale?page={page}
+    max_pages: 5
+    status: unverified
+
+  - id: luisaviaroma
+    name: LuisaViaRoma
+    type: new
+    ships_from: EU
+    shipping: {flat: 15, free_over: 300}
+    currency: EUR
+    listing_urls:
+      - https://www.luisaviaroma.com/en-bg/shop/women/sale?page={page}
+    max_pages: 5
+    status: unverified
+
+  - id: yoox
+    name: YOOX
+    type: new
+    ships_from: EU
+    shipping: {flat: 9.9, free_over: 150}
+    currency: EUR
+    listing_urls:
+      - https://www.yoox.com/bg/women/shoponline?page={page}
+    max_pages: 5
+    status: unverified
+
+  - id: bestsecret
+    name: BestSecret
+    type: new
+    ships_from: EU
+    shipping: {flat: 6.9, free_over: 0}
+    currency: EUR
+    requires_login: true   # members-only shopping club; see README
+    listing_urls: []
+    status: login-required
+
+  - id: giglio
+    name: Giglio
+    type: new
+    ships_from: EU
+    shipping: {flat: 15, free_over: 300}
+    currency: EUR
+    listing_urls:
+      - https://www.giglio.com/en/women/sale?page={page}
+    max_pages: 5
+    status: unverified
+
+  - id: lncc
+    name: LN-CC
+    type: new
+    ships_from: non-EU   # UK
+    shipping: {flat: 20, free_over: 0}
+    currency: EUR
+    listing_urls:
+      - https://www.ln-cc.com/en/bg/women/sale?page={page}
+    max_pages: 5
+    status: unverified
+
+  - id: farfetch
+    name: Farfetch
+    type: new
+    ships_from: EU       # mixed boutiques; most ship duty-paid (DDP) to the EU
+    shipping: {flat: 15, free_over: 0}
+    currency: EUR
+    listing_urls:
+      - https://www.farfetch.com/bg/shopping/women/sale/all/items.aspx?page={page}
+    max_pages: 5
+    status: unverified
+
+  # ---- pre-loved (reference prices + their own deals) ----
+  - id: vestiaire
+    name: Vestiaire Collective
+    type: preloved
+    ships_from: EU
+    shipping: {flat: 15, free_over: 0}
+    currency: EUR
+    listing_urls:
+      - https://www.vestiairecollective.com/women-clothing/?page={page}
+    max_pages: 10
+    status: unverified
+
+  - id: vinted
+    name: Vinted
+    type: preloved
+    ships_from: EU
+    shipping: {flat: 6, free_over: 0}
+    currency: EUR
+    listing_urls:
+      - https://www.vinted.com/catalog?search_text=gucci&page={page}
+    max_pages: 5
+    status: unverified
+
+  - id: hewi
+    name: Hardly Ever Worn It
+    type: preloved
+    ships_from: non-EU   # UK
+    shipping: {flat: 20, free_over: 0}
+    currency: GBP
+    listing_urls:
+      - https://www.hardlyeverwornit.com/clothing?page={page}
+    max_pages: 5
+    status: unverified

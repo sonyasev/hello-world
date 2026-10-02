@@ -1,0 +1,70 @@
+from __future__ import annotations
+
+from ..brands import find_brand_in_title, normalize_brand
+from ..categories import infer_category
+from ..config import Config, Store
+from ..models import Item
+from .extract import jsonld_products
+from .fetch import Fetcher
+
+
+class Scraper:
+    """Generic listing scraper. Subclass and override `parse` for stores without usable JSON-LD."""
+
+    def __init__(self, store: Store, fetcher: Fetcher):
+        self.store = store
+        self.fetcher = fetcher
+
+    def parse(self, html: str, url: str) -> list[dict]:
+        return jsonld_products(html, url)
+
+    def fetch_sizes(self, url: str) -> list[str]:
+        """Available sizes from the product page (listing pages rarely carry them)."""
+        html = self.fetcher.get(url)
+        if not html:
+            return []
+        sizes: list[str] = []
+        for r in self.parse(html, url):
+            sizes.extend(r.get("sizes", []))
+        return sorted(set(sizes))
+
+    def scrape(self) -> list[Item]:
+        items: list[Item] = []
+        seen: set[str] = set()
+        for template in self.store.listing_urls:
+            for page in range(1, self.store.max_pages + 1):
+                url = template.format(page=page)
+                html = self.fetcher.get(url)
+                if not html:
+                    break
+                rows = [r for r in self.parse(html, url) if r["url"] not in seen]
+                if not rows:
+                    break  # ran off the end of pagination
+                for r in rows:
+                    seen.add(r["url"])
+                    brand = normalize_brand(r.get("brand")) or find_brand_in_title(r["title"])
+                    if not brand:  # only the top-30 brands
+                        continue
+                    items.append(Item(
+                        store=self.store.id, source_type=self.store.type, url=r["url"], title=r["title"],
+                        price=r["price"], currency=r.get("currency") or self.store.currency, brand=brand,
+                        category=infer_category(r["title"], r.get("category")), sizes=r.get("sizes", []),
+                        original_price=r.get("original_price"), condition=r.get("condition"), image=r.get("image"),
+                    ))
+        return items
+
+
+# Store-specific subclasses go here, keyed by store id (see README: "Adding / fixing a store").
+CUSTOM: dict[str, type[Scraper]] = {}
+
+
+def build_scrapers(cfg: Config, fetcher: Fetcher, only: list[str] | None = None) -> list[Scraper]:
+    out = []
+    for s in cfg.stores:
+        if only and s.id not in only:
+            continue
+        if s.requires_login or not s.listing_urls:
+            print(f"skipping {s.id}: {s.status}")
+            continue
+        out.append(CUSTOM.get(s.id, Scraper)(s, fetcher))
+    return out
