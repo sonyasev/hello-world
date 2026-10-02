@@ -135,7 +135,10 @@ def test_report_and_db(tmp_path):
     db.commit()
     out = render(db.deals(10), {"mytheresa": "Mytheresa"}, "now", tmp_path / "s" / "index.html")
     html = out.read_text()
-    assert "Mytheresa" in html and "<b>coat</b>" not in html  # escaped
+    assert "Mytheresa" in html and "<b>coat</b>" not in html  # can't break out of the embedded data
+    data = json.loads((tmp_path / "s" / "deals.json").read_text())
+    row, = data["rows"]
+    assert row["matched"] == ["M"] and row["store_name"] == "Mytheresa" and row["shipping_eur"] == 15
     assert len(db.unnotified_deals(10)) == 1
     db.mark_notified([i.url])
     assert db.unnotified_deals(10) == []

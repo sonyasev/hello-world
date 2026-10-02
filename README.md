@@ -1,7 +1,8 @@
 # luxdeals
 
 Finds deals on top-30 luxury brands (women's clothes, shoes, bags) in your sizes across online stores and
-pre-loved marketplaces that ship to Bulgaria. Output: a sortable web page + WhatsApp (fallback: email) notifications.
+pre-loved marketplaces that ship to Bulgaria. Output: a web page of deals with browser notifications
+(WhatsApp / email messages are built in but switched off – see `notify` in `config.yaml`).
 100% open source, no paid services.
 
 ## How it works
@@ -17,16 +18,24 @@ pre-loved marketplaces that ship to Bulgaria. Output: a sortable web page + What
 
    Every top-brand item is stored, so history-based signals get better after a week or two of daily runs.
 4. **Sizes**: only items available in your sizes (`config.yaml`) are kept; sizes are fetched from the product page for deal candidates only.
-5. **Output**: `site/index.html` (sortable/filterable table) and a message per new deal.
+5. **Output**: `site/index.html` – filterable, sortable table; click a row for the photo, full price breakdown
+   (listed → EUR → shipping → import costs → delivered), every reason it is a deal, all sizes and price history.
+   Deals added since your last visit are marked **NEW**.
 
 ## Run
 ```bash
 pip install -e .            # add `.[browser]` + `playwright install chromium` for JS-heavy stores
-luxdeals run                # scrape + report + notify
-luxdeals run --only mytheresa --browser --no-notify
+luxdeals serve              # page at http://localhost:8000, re-scrapes every 6 h (--every 12, --port 8080)
+luxdeals run                # one scrape, then rebuild site/index.html (open it straight from disk)
+luxdeals run --only mytheresa --browser
 luxdeals report             # just rebuild the page from the DB
 pytest
 ```
+
+## Browser notifications
+With `luxdeals serve` running, open http://localhost:8000 and click **Turn on browser notifications**. While that tab is
+open (it can be in the background), the page checks for new deals every 5 minutes and pops up a notification.
+There is no notification when the tab or the computer is closed – that would need a push server.
 
 ## Secrets (environment variables)
 Never put passwords in `config.yaml` or commit them. Two options, depending on where it runs:

@@ -10,7 +10,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS items (
   url TEXT PRIMARY KEY, store TEXT, source_type TEXT, brand TEXT, category TEXT, title TEXT, product_code TEXT,
   sizes TEXT, matched_sizes TEXT, price REAL, currency TEXT, original_price REAL, discount REAL,
-  landed_eur REAL, ref_price_eur REAL, ratio REAL, score REAL, reason TEXT,
+  price_eur REAL, shipping_eur REAL, duties_eur REAL, landed_eur REAL, ref_price_eur REAL, ratio REAL, score REAL, reason TEXT,
   condition TEXT, image TEXT, first_seen TEXT, last_seen TEXT, is_deal INTEGER DEFAULT 0, notified INTEGER DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS price_history (url TEXT, seen TEXT, landed_eur REAL);
@@ -18,7 +18,7 @@ CREATE INDEX IF NOT EXISTS ph_url ON price_history(url);
 """
 
 _COLS = ["url", "store", "source_type", "brand", "category", "title", "product_code", "sizes", "matched_sizes", "price",
-         "currency", "original_price", "discount", "landed_eur", "ref_price_eur", "ratio", "score", "reason",
+         "currency", "original_price", "discount", "price_eur", "shipping_eur", "duties_eur", "landed_eur", "ref_price_eur", "ratio", "score", "reason",
          "condition", "image", "first_seen", "last_seen", "is_deal"]
 _UPDATE = [c for c in _COLS if c not in ("url", "first_seen")]
 
@@ -55,6 +55,16 @@ class DB:
 
     def lowest_prices(self) -> dict[str, float]:
         return {r[0]: r[1] for r in self.con.execute("SELECT url, MIN(landed_eur) FROM price_history GROUP BY url")}
+
+    def price_history(self, urls: list[str]) -> dict[str, list[tuple[str, float]]]:
+        out: dict[str, list] = {u: [] for u in urls}
+        for i in range(0, len(urls), 500):
+            chunk = urls[i:i + 500]
+            for r in self.con.execute(
+                    f"SELECT url, seen, landed_eur FROM price_history WHERE url IN ({','.join('?' * len(chunk))}) ORDER BY seen",
+                    chunk):
+                out[r[0]].append((r[1], r[2]))
+        return out
 
     def deals(self, limit: int):
         return self.con.execute("SELECT * FROM items WHERE is_deal=1 ORDER BY score DESC LIMIT ?", (limit,)).fetchall()

@@ -33,7 +33,7 @@ fx:
 
 # ---- Notifications. Secrets come from environment variables / .env, never from this file ----
 notify:
-  enabled: true
+  enabled: false              # off for now: the web page (with browser notifications) is the output
   mode: email                 # email | whatsapp_then_email | both | whatsapp
   max_per_run: 10
   whatsapp:                   # CallMeBot
