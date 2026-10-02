@@ -34,7 +34,7 @@ fx:
 # ---- Notifications. Secrets come from environment variables / .env, never from this file ----
 notify:
   enabled: true
-  mode: whatsapp_then_email   # whatsapp_then_email | both | whatsapp | email
+  mode: email                 # email | whatsapp_then_email | both | whatsapp
   max_per_run: 10
   whatsapp:                   # CallMeBot
     phone_env: WHATSAPP_PHONE        # international format, e.g. +359888123456
