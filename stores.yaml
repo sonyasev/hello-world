@@ -54,9 +54,12 @@ stores:
     ships_from: EU
     shipping: {flat: 6.9, free_over: 0}
     currency: EUR
-    requires_login: true   # members-only shopping club; see README
-    listing_urls: []
-    status: login-required
+    requires_login: true   # members-only; needs BESTSECRET_EMAIL / BESTSECRET_PASSWORD and the [browser] extra
+    # Replace with the sale/brand pages you browse when logged in (copy the URL from your browser).
+    listing_urls:
+      - https://www.bestsecret.com/category.htm?category=women&page={page}
+    max_pages: 3
+    status: unverified
 
   - id: giglio
     name: Giglio

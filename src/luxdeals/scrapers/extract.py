@@ -43,6 +43,11 @@ def _to_float(v) -> float | None:
         return None
 
 
+def normalize_code(v) -> str | None:
+    code = re.sub(r"[^A-Z0-9]", "", str(v or "").upper())
+    return code if len(code) >= 6 else None
+
+
 def jsonld_products(html: str, base_url: str = "") -> list[dict]:
     """Return normalised dicts: title, brand, url, price, currency, original_price, sizes, image, condition."""
     out = []
@@ -73,6 +78,6 @@ def jsonld_products(html: str, base_url: str = "") -> list[dict]:
                 "title": node["name"], "brand": brand, "url": urljoin(base_url, node.get("url") or offer.get("url") or ""),
                 "price": price, "currency": cur, "original_price": orig, "sizes": sizes,
                 "image": _first(node.get("image")) if not isinstance(_first(node.get("image")), dict) else None,
-                "condition": cond,
+                "condition": cond, "product_code": normalize_code(node.get("mpn") or node.get("productID")),
             })
     return out

@@ -18,6 +18,13 @@ class Scraper:
     def parse(self, html: str, url: str) -> list[dict]:
         return jsonld_products(html, url)
 
+    @classmethod
+    def has_credentials(cls) -> bool:
+        return False
+
+    def close(self):
+        pass
+
     def fetch_sizes(self, url: str) -> list[str]:
         """Available sizes from the product page (listing pages rarely carry them)."""
         html = self.fetcher.get(url)
@@ -50,12 +57,16 @@ class Scraper:
                         price=r["price"], currency=r.get("currency") or self.store.currency, brand=brand,
                         category=infer_category(r["title"], r.get("category")), sizes=r.get("sizes", []),
                         original_price=r.get("original_price"), condition=r.get("condition"), image=r.get("image"),
+                        product_code=r.get("product_code"),
                     ))
         return items
 
 
-# Store-specific subclasses go here, keyed by store id (see README: "Adding / fixing a store").
-CUSTOM: dict[str, type[Scraper]] = {}
+def _custom() -> dict[str, type[Scraper]]:
+    """Store-specific subclasses, keyed by store id (see README: "Adding / fixing a store")."""
+    from .bestsecret import BestSecretScraper
+
+    return {"bestsecret": BestSecretScraper}
 
 
 def build_scrapers(cfg: Config, fetcher: Fetcher, only: list[str] | None = None) -> list[Scraper]:
@@ -63,8 +74,12 @@ def build_scrapers(cfg: Config, fetcher: Fetcher, only: list[str] | None = None)
     for s in cfg.stores:
         if only and s.id not in only:
             continue
-        if s.requires_login or not s.listing_urls:
-            print(f"skipping {s.id}: {s.status}")
+        if not s.listing_urls:
+            print(f"skipping {s.id}: no listing URLs")
             continue
-        out.append(CUSTOM.get(s.id, Scraper)(s, fetcher))
+        cls = _custom().get(s.id, Scraper)
+        if s.requires_login and not cls.has_credentials():
+            print(f"skipping {s.id}: login required, credentials not set")
+            continue
+        out.append(cls(s, fetcher))
     return out

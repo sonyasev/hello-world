@@ -83,22 +83,53 @@ def test_landed_cost_and_deal_pipeline():
     wrong_size = mk("mytheresa", "new", "Max Mara camel wool coat grey", 400, sizes=["XXL"])
     uk = mk("theoutnet", "new", "Max Mara camel wool coat navy", 400, sizes=["IT 42"])      # non-EU: duties push it up
     res = process(CFG, [*comps, cheap, pricey, wrong_size, uk], [], PROFILE)
-    urls = {i.url: i for i, _ in res}
+    urls = {i.url: i for i, d in res if d}
     assert cheap.url in urls and urls[cheap.url].matched_sizes == ["S"]
     assert pricey.url not in urls and wrong_size.url not in urls
     assert uk.landed_eur > 400 * 1.2  # VAT + duty applied
     assert cheap.shipping_eur == 15 and cheap.landed_eur == 395
 
 
+def test_price_drop_signal():
+    it = mk("mytheresa", "new", "Max Mara wool scarf coat", 500, sizes=["M"])
+    res = process(CFG, [it], [], PROFILE, prev_low={it.url: 700.0})
+    assert res[0][1] and "price drop" in it.reason
+
+
+def test_cross_store_signal():
+    a = mk("yoox", "new", "Max Mara coat", 300, sizes=["M"], product_code="MM1234567")
+    b = mk("giglio", "new", "Max Mara coat", 600, sizes=["M"], product_code="MM1234567")
+    res = dict((i.store, d) for i, d in process(CFG, [a, b], [], PROFILE))
+    assert res == {"yoox": True, "giglio": False}
+    assert "cheaper than giglio" in a.reason
+
+
+def test_brand_relative_discount():
+    # 20 history items of this brand usually 20-35% off; a 45% discount is rare for the brand
+    hist = [mk("yoox", "new", f"Max Mara coat {i}", 500, landed_eur=500.0, discount=0.20 + (i % 4) * 0.05) for i in range(20)]
+    rare = mk("yoox", "new", "Max Mara coat special", 330, sizes=["M"], original_price=600)  # 45% off
+    usual = mk("yoox", "new", "Max Mara coat normal", 450, sizes=["M"], original_price=600)  # 25% off
+    res = {i.url: d for i, d in process(CFG, [rare, usual], hist, PROFILE)}
+    assert res[rare.url] and "rare for Max Mara" in rare.reason
+    assert not res[usual.url]
+
+
+def test_deal_needs_my_size():
+    it = mk("mytheresa", "new", "Max Mara rare coat", 300, sizes=["XL"], original_price=900)
+    (i, is_deal), = process(CFG, [it], [], PROFILE)
+    assert not is_deal
+
+
 def test_fallback_discount_without_comps():
     it = mk("mytheresa", "new", "Max Mara rare coat", 300, sizes=["M"], original_price=900)
     res = process(CFG, [it], [], PROFILE)
-    assert res and "off retail" in res[0][0].reason
+    assert res[0][1] and "off retail" in res[0][0].reason
 
 
 def test_report_and_db(tmp_path):
     it = mk("mytheresa", "new", "Max Mara <b>coat</b>", 300, sizes=["M"], original_price=900)
     (i, _), = process(CFG, [it], [], PROFILE)
+    assert i.score > 0
     db = DB(tmp_path / "t.db")
     db.upsert(i, True, "2026-10-02T00:00:00")
     db.commit()
@@ -108,3 +139,15 @@ def test_report_and_db(tmp_path):
     assert len(db.unnotified_deals(10)) == 1
     db.mark_notified([i.url])
     assert db.unnotified_deals(10) == []
+
+
+def test_notify_falls_back_to_email(monkeypatch):
+    from luxdeals import notify
+
+    rows = [{"url": "u1", "brand": "Gucci", "title": "Coat", "store": "yoox", "source_type": "new",
+             "matched_sizes": '["M"]', "landed_eur": 300.0, "reason": "60% off retail"}]
+    sent_email = []
+    monkeypatch.setattr(notify.whatsapp, "send", lambda rows, fmt, cfg: [])  # WhatsApp not configured / failing
+    monkeypatch.setattr(notify.email, "send", lambda rows, fmt, cfg: sent_email.extend(rows) or True)
+    assert notify.send(rows, CFG["notify"]) == ["u1"] and sent_email == rows
+    assert "€300 delivered to BG" in notify.format_deal(rows[0])

@@ -5,7 +5,8 @@ from datetime import datetime, timezone
 
 from . import config as cfgmod
 from .db import DB
-from .notify import viber
+from . import notify
+from .envfile import load_env
 from .pipeline import run
 from .report import render
 
@@ -21,6 +22,7 @@ def main(argv=None):
     p.add_argument("--delay", type=float, default=3.0, help="seconds between requests")
     p.add_argument("--no-notify", action="store_true")
     a = p.parse_args(argv)
+    load_env()
 
     cfg = cfgmod.load(a.config, a.stores)
     db = DB(a.db)
@@ -32,9 +34,9 @@ def main(argv=None):
         out = render(rows, {s.id: s.name for s in cfg.stores},
                      datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"), cfg["report"]["output"])
         print(f"wrote {out} ({len(rows)} rows)")
-    if a.command in ("run", "notify") and not a.no_notify and cfg["viber"]["enabled"]:
-        rows = db.unnotified_deals(cfg["viber"]["max_per_run"])
-        db.mark_notified(viber.send(rows, cfg["viber"]))
+    if a.command in ("run", "notify") and not a.no_notify and cfg["notify"]["enabled"]:
+        rows = db.unnotified_deals(cfg["notify"]["max_per_run"])
+        db.mark_notified(notify.send(rows, cfg["notify"]))
         db.commit()
 
 

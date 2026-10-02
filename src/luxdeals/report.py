@@ -30,7 +30,7 @@ TEMPLATE = """<!doctype html>
 </div>
 <div class="wrap"><table id="t"><thead><tr>
  <th></th><th>Brand / item</th><th>Store</th><th>Category</th><th>Your size</th>
- <th class="n" data-num>Landed €</th><th class="n" data-num>Ref €</th><th class="n" data-num>Ratio</th><th>Why</th>
+ <th class="n" data-num>Landed €</th><th class="n" data-num>Pre-loved €</th><th class="n" data-num>Score</th><th>Why</th>
 </tr></thead><tbody>
 {% for r in rows %}<tr data-type="{{ r.source_type }}" data-store="{{ r.store_name }}" data-cat="{{ r.category }}">
  <td>{% if r.image %}<img loading="lazy" src="{{ r.image }}" alt="">{% endif %}</td>
@@ -40,7 +40,7 @@ TEMPLATE = """<!doctype html>
  <td>{% for s in r.matched %}<span class="chip">{{ s }}</span>{% endfor %}</td>
  <td class="n" data-v="{{ r.landed_eur }}">{{ '%.0f'|format(r.landed_eur) }}<br><span class="sub">{{ '%.0f'|format(r.price) }} {{ r.currency }} listed</span></td>
  <td class="n" data-v="{{ r.ref_price_eur or 0 }}">{{ '%.0f'|format(r.ref_price_eur) if r.ref_price_eur else '–' }}</td>
- <td class="n" data-v="{{ r.ratio or 9 }}">{{ '%.0f%%'|format(r.ratio*100) if r.ratio else '–' }}</td>
+ <td class="n" data-v="{{ r.score or 0 }}">{{ '%.2f'|format(r.score or 0) }}</td>
  <td class="why">{{ r.reason }}</td></tr>{% endfor %}
 </tbody></table></div>
 <script>

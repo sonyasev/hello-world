@@ -13,7 +13,13 @@ deals:
   min_comps: 3            # need at least this many comparable pre-loved items
   max_ratio_vs_preloved: 1.05   # new item: landed price <= 105% of median pre-loved landed price
   preloved_max_ratio: 0.70      # pre-loved item: landed price <= 70% of median of similar pre-loved items
-  min_discount_vs_retail: 0.50  # fallback when no comps: >= 50% off original price
+  min_price_drop: 0.10          # >= 10% below the lowest price seen for this item
+  min_cross_store_saving: 0.15  # same product >= 15% cheaper than at any other store
+  min_brand_samples: 15         # need this many items of a brand before judging "usual" discount/price
+  brand_discount_quantile: 0.90 # discount must be in the top 10% for the brand...
+  min_discount_floor: 0.30      # ...and at least 30%
+  max_ratio_vs_brand_median: 0.50  # landed <= 50% of brand's usual price for the category
+  min_discount_vs_retail: 0.50  # fallback while a brand has too few samples
   min_title_similarity: 0.25
   max_price_eur: 1500
   min_price_eur: 40
@@ -25,13 +31,21 @@ fx:
   GBP: 1.16
   BGN: 0.5113
 
-# ---- Notifications (Viber bot). Secrets come from env vars, never from this file ----
-viber:
+# ---- Notifications. Secrets come from environment variables / .env, never from this file ----
+notify:
   enabled: true
-  auth_token_env: VIBER_AUTH_TOKEN
-  receiver_env: VIBER_RECEIVER_ID
-  sender_name: LuxDeals
+  mode: whatsapp_then_email   # whatsapp_then_email | both | whatsapp | email
   max_per_run: 10
+  whatsapp:                   # CallMeBot
+    phone_env: WHATSAPP_PHONE        # international format, e.g. +359888123456
+    apikey_env: CALLMEBOT_APIKEY
+    delay_seconds: 3
+  email:
+    host_env: SMTP_HOST              # e.g. smtp.gmail.com
+    port_env: SMTP_PORT              # 465 (SSL, default) or 587 (STARTTLS)
+    user_env: SMTP_USER
+    password_env: SMTP_PASSWORD      # Gmail: an App Password, not your normal password
+    to_env: NOTIFY_EMAIL_TO
 
 report:
   output: site/index.html

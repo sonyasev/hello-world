@@ -18,6 +18,7 @@ class Item:
     original_price: float | None = None  # retail / pre-discount price
     condition: str | None = None  # preloved only
     image: str | None = None
+    product_code: str | None = None  # manufacturer code (mpn), for cross-store matching
     first_seen: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
 
     # filled by the pipeline
@@ -30,4 +31,5 @@ class Item:
     comps: int = 0
     ratio: float | None = None  # landed / ref
     discount: float | None = None  # 0..1 vs original price
+    score: float = 0.0  # higher = better deal
     reason: str = ""

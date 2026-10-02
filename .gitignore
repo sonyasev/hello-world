@@ -4,3 +4,4 @@ __pycache__/
 data/*.db
 site/
 .env
+data/bestsecret_state.json
