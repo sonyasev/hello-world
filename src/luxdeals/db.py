@@ -29,6 +29,10 @@ class DB:
         self.con = sqlite3.connect(path)
         self.con.row_factory = sqlite3.Row
         self.con.executescript(SCHEMA)
+        have = {r[1] for r in self.con.execute("PRAGMA table_info(items)")}
+        for col in _COLS:  # add columns introduced after the DB was created
+            if col not in have:
+                self.con.execute(f"ALTER TABLE items ADD COLUMN {col}")
 
     def upsert(self, it: Item, is_deal: bool, now: str):
         prev = self.con.execute("SELECT landed_eur FROM items WHERE url=?", (it.url,)).fetchone()
